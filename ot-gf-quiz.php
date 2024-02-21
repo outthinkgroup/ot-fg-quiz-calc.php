@@ -14,6 +14,7 @@
  */
 
 
+require_once('gf-range-field.php');
 // create the gf addon
 function bootstrap_addon() {
 	if (!method_exists('GFForms', 'include_addon_framework')) {
@@ -21,107 +22,27 @@ function bootstrap_addon() {
 	}
 	include_once plugin_dir_path(__FILE__) . "/gf-addon.php";
 	\GFAddOn::register(OT_QuizAddon::class);
+	\GF_Fields::register(new OT_RangeField());
 }
 add_action('gform_loaded', 'bootstrap_addon');
 
 
-const HIGH = "high";
-const LOW = "low";
-const MEDIUM = "moderate";
+//		window.history.replaceState(null, '', window.location.pathname); // this may not be needed
+/*╭──────────────────────────╮*/
+/*│    [   Shortcodes   ]    │*/
+/*╰──────────────────────────╯*/
 
-function label_score($score) {
-	switch ($score) {
-		case $score <= 10:
-			return LOW;
-			break;
-		case $score <= 14:
-			return MEDIUM;
-			break;
-		default:
-			return HIGH;
-			break;
-	}
-}
-
-add_shortcode('quiz_results', 'quiz_results_shortcode');
-function quiz_results_shortcode() {
-	$result_sets = get_field('result_sets', 'option');
-	$results = array_map(function ($set) {
-		$set_id = $set['set_name'];
-		$set['score'] = $_GET[$set_id] ?? 0;
-		$set['label'] = label_score($set['score']);
-		return $set;
-	}, (array) $result_sets);
-	usort($results, function ($a, $b) {
-		return $b['score'] - $a['score'];
-	});
-
-?>
-	<script>
-		window.history.replaceState(null, '', window.location.pathname); // this may not be needed
-	</script>
-	<style>
-		.result-layout {
-			max-width: 1280px;
-			margin: 0 auto;
-			padding: 0 20px;
-		}
-
-		.result-layout h3 {
-			font-size: 2.5rem;
-			margin-bottom: 40px;
-		}
-
-		.result-layout h4 {
-			color: var(--ast-global-color-0);
-		}
-
-		.score__label {
-			text-transform: capitalize;
-			font-weight: 700;
-			color: var(--ast-global-color-2)
-		}
-
-		.score__value {
-			color: var(--ast-global-color-3);
-		}
-
-		.result-layout article:not(:last-child) {
-			margin-bottom: 80px;
-			position: relative;
-		}
-
-		.result-layout article:not(:last-child):after {
-			content: "";
-			display: block;
-			width: 200px;
-			height: 3px;
-			background-color: #FAB350;
-			position: absolute;
-			bottom: -40px;
-		}
-	</style>
-	<div class="result-layout">
-		<h3>Your Results</h3>
-		<div class="results">
-			<?php foreach ($results as $result) : ?>
-				<article class="set">
-					<h4>
-						<?php echo $result['set_heading']; ?>:
-						<span class="score">
-							<span class="score__label"><?php echo $result['label']; ?></span>
-							<!-- <span class="score__value"><?php echo $result['score']; ?><span>-->
-						</span>
-					</h4>
-
-					<div class="set__summary"><?php echo $result['set_summary']; ?></div>
-					<?php if ($result['label'] == HIGH) : ?>
-						<div class="set__explained">
-							<?php echo $result['results_high']; ?>
-						</div>
-					<?php endif; ?>
-				</article>
-			<?php endforeach; ?>
-		</div>
-	</div>
-<?php }
+add_shortcode('ot_quiz_result', function ($atts) {
+	[
+		'cat' => $cat,
+		'output' => $output,
+	] = shortcode_atts([
+		'cat' => null,
+		'output' => 'text', // or 'graphic'
+	], $atts);
+	if (!isset($_GET['quiz_results'])) return "";
+	$form = \GFAPI::get_form(intval($_GET['quiz_results']));
+	$scores = OT_QuizAddon::results_from_cats($form, $_GET);
+	$scores = apply_filters('ot_quiz_result_scores', $scores, $form, ($output ?? "text"));
+	return $scores[$cat];
+});
