@@ -7,7 +7,7 @@ class OT_QuizAddon extends \GFAddOn {
 	// Container system to configure these settings
 	// Which is why they dont follow that convention
 	public const slug = 'ot_quizaddon';
-	protected $_version =  "1.1.4";
+	protected $_version =  "1.1.5";
 	protected $_min_gravityforms_version = '1.9';
 	protected $_slug = self::slug;
 	protected $_path = 'ot-fg-quiz-calc/gf-addon.php';

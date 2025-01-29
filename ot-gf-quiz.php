@@ -8,7 +8,7 @@
  * Author URI:      YOUR SITE HERE
  * Text Domain:     ot-gf-quiz
  * Domain Path:     /languages
- * Version:         0.1.0
+ * Version:         0.2.0
  *
  * @package         Ot_Gf_Quiz
  */
